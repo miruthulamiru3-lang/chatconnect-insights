@@ -15,6 +15,7 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import CreateGroupDialog from "@/components/chat/GroupChatPanel";
 import CallScreen from "@/components/chat/CallScreen";
 
@@ -35,6 +36,7 @@ const Chat = () => {
   const [tab, setTab] = useState<'chats' | 'groups'>('chats');
   const [editingMsg, setEditingMsg] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
+  const [shareMsg, setShareMsg] = useState<Message | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -344,7 +346,7 @@ const Chat = () => {
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start" className="w-32">
-                          <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(msg.content); }}>
+                          <DropdownMenuItem onClick={() => setShareMsg(msg)}>
                             <Share2 className="h-3.5 w-3.5 mr-2" /> Share
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -358,7 +360,7 @@ const Chat = () => {
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-32">
-                          <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(msg.content); }}>
+                          <DropdownMenuItem onClick={() => setShareMsg(msg)}>
                             <Share2 className="h-3.5 w-3.5 mr-2" /> Share
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => { setEditingMsg(msg.id); setEditContent(msg.content); }}>
@@ -449,6 +451,33 @@ const Chat = () => {
           </div>
         )}
       </div>
+      {/* Share Dialog */}
+      <Dialog open={!!shareMsg} onOpenChange={() => setShareMsg(null)}>
+        <DialogContent className="sm:max-w-xs">
+          <DialogHeader>
+            <DialogTitle>Share message to</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-1 max-h-60 overflow-y-auto">
+            {friends.filter(f => f.id !== currentUser?.id).map(friend => (
+              <button
+                key={friend.id}
+                onClick={() => {
+                  if (shareMsg && currentUser) {
+                    sendMessage(currentUser.id, friend.id, `📩 Shared: "${shareMsg.content}"`);
+                    setShareMsg(null);
+                  }
+                }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-colors text-left"
+              >
+                <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary">
+                  {friend.name[0]}
+                </div>
+                <span className="text-sm font-medium">{friend.name}</span>
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

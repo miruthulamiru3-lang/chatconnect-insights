@@ -6,11 +6,12 @@ import {
   getSession, getUserFriends, getConversation, sendMessage, markAsRead,
   addFriend, getUserById, setSession, getUserGroups, getGroupMessages,
   getCallSignal, initiateCall, updateMessage, deleteMessage,
-  type User, type Message, type Group
+  type User, type Message, type Group, type Attachment
 } from "@/lib/store";
 import {
   Send, LogOut, UserPlus, Check, CheckCheck, MessageCircle,
-  Phone, Video, Users, Pencil, Trash2, MoreVertical, X, Share2
+  Phone, Video, Users, Pencil, Trash2, MoreVertical, X, Share2,
+  Paperclip, Image, FileText
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
@@ -37,7 +38,9 @@ const Chat = () => {
   const [editingMsg, setEditingMsg] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
   const [shareMsg, setShareMsg] = useState<Message | null>(null);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const session = getSession();
@@ -92,14 +95,33 @@ const Chat = () => {
     return () => clearInterval(interval);
   }, [currentUser]);
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    Array.from(files).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setAttachments(prev => [...prev, {
+          name: file.name,
+          type: file.type,
+          data: reader.result as string,
+        }]);
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = '';
+  };
+
   const handleSend = () => {
-    if (!newMessage.trim() || !currentUser || !selected) return;
+    if ((!newMessage.trim() && attachments.length === 0) || !currentUser || !selected) return;
+    const atts = attachments.length > 0 ? attachments : undefined;
     if (selected.type === 'friend') {
-      sendMessage(currentUser.id, selected.user.id, newMessage.trim());
+      sendMessage(currentUser.id, selected.user.id, newMessage.trim(), undefined, atts);
     } else {
-      sendMessage(currentUser.id, selected.group.id, newMessage.trim(), selected.group.id);
+      sendMessage(currentUser.id, selected.group.id, newMessage.trim(), selected.group.id, atts);
     }
     setNewMessage("");
+    setAttachments([]);
   };
 
   const handleAddFriend = () => {
@@ -402,7 +424,23 @@ const Chat = () => {
                           </button>
                         </div>
                       ) : (
-                        <p className="text-sm">{msg.content}</p>
+                        <>
+                          {msg.content && <p className="text-sm">{msg.content}</p>}
+                          {msg.attachments && msg.attachments.length > 0 && (
+                            <div className="mt-1 space-y-1">
+                              {msg.attachments.map((att, i) =>
+                                att.type.startsWith('image/') ? (
+                                  <img key={i} src={att.data} alt={att.name} className="max-w-[200px] rounded-lg cursor-pointer" onClick={() => window.open(att.data, '_blank')} />
+                                ) : (
+                                  <a key={i} href={att.data} download={att.name} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${isMine ? 'bg-white/20' : 'bg-background/50'}`}>
+                                    <FileText className="h-4 w-4 shrink-0" />
+                                    <span className="truncate">{att.name}</span>
+                                  </a>
+                                )
+                              )}
+                            </div>
+                          )}
+                        </>
                       )}
                       <div className={`flex items-center gap-1 mt-1 ${isMine ? "justify-end" : "justify-start"}`}>
                         <span className={`text-[10px] ${isMine ? "text-white/70" : "text-muted-foreground"}`}>
@@ -423,7 +461,45 @@ const Chat = () => {
 
             {/* Input */}
             <div className="p-4 border-t border-border bg-card/60 backdrop-blur-sm">
+              {attachments.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {attachments.map((att, i) => (
+                    <div key={i} className="relative group/att">
+                      {att.type.startsWith('image/') ? (
+                        <img src={att.data} alt={att.name} className="h-16 w-16 rounded-lg object-cover" />
+                      ) : (
+                        <div className="h-16 px-3 rounded-lg bg-muted flex items-center gap-2 text-xs">
+                          <FileText className="h-4 w-4" />
+                          <span className="max-w-[80px] truncate">{att.name}</span>
+                        </div>
+                      )}
+                      <button
+                        onClick={() => setAttachments(prev => prev.filter((_, j) => j !== i))}
+                        className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center text-xs opacity-0 group-hover/att:opacity-100 transition-opacity"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
               <div className="flex gap-2">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileSelect}
+                  multiple
+                  accept="image/*,.pdf,.doc,.docx,.txt,.zip"
+                  className="hidden"
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-xl shrink-0"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Paperclip className="h-4 w-4" />
+                </Button>
                 <Input
                   placeholder="Type a message..."
                   value={newMessage}
@@ -433,7 +509,7 @@ const Chat = () => {
                 />
                 <Button
                   onClick={handleSend}
-                  disabled={!newMessage.trim()}
+                  disabled={!newMessage.trim() && attachments.length === 0}
                   className="rounded-xl bg-gradient-to-r from-primary to-accent hover:opacity-90"
                 >
                   <Send className="h-4 w-4" />

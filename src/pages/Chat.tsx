@@ -10,7 +10,7 @@ import {
 } from "@/lib/store";
 import {
   Send, LogOut, UserPlus, Check, CheckCheck, MessageCircle,
-  Phone, Video, Users, Pencil, Trash2, MoreVertical, X
+  Phone, Video, Users, Pencil, Trash2, MoreVertical, X, Share2
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
@@ -336,6 +336,20 @@ const Chat = () => {
                 const senderName = selected.type === 'group' && !isMine ? getUserById(msg.senderId)?.name : null;
                 return (
                   <div key={msg.id} className={`flex items-end gap-1 group ${isMine ? "justify-end" : "justify-start"}`}>
+                    {!isMine && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-muted">
+                            <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="w-32">
+                          <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(msg.content); }}>
+                            <Share2 className="h-3.5 w-3.5 mr-2" /> Share
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                     {isMine && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -344,6 +358,9 @@ const Chat = () => {
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-32">
+                          <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(msg.content); }}>
+                            <Share2 className="h-3.5 w-3.5 mr-2" /> Share
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => { setEditingMsg(msg.id); setEditContent(msg.content); }}>
                             <Pencil className="h-3.5 w-3.5 mr-2" /> Edit
                           </DropdownMenuItem>

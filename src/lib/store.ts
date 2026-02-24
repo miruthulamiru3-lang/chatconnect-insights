@@ -180,6 +180,23 @@ export function sendMessage(senderId: string, receiverId: string, content: strin
   return msg;
 }
 
+export function updateMessage(messageId: string, newContent: string): boolean {
+  const msgs = getMessages();
+  const idx = msgs.findIndex(m => m.id === messageId);
+  if (idx === -1) return false;
+  msgs[idx].content = newContent;
+  set(MESSAGES_KEY, msgs);
+  return true;
+}
+
+export function deleteMessage(messageId: string): boolean {
+  const msgs = getMessages();
+  const filtered = msgs.filter(m => m.id !== messageId);
+  if (filtered.length === msgs.length) return false;
+  set(MESSAGES_KEY, filtered);
+  return true;
+}
+
 export function markAsRead(messageId: string) {
   const msgs = getMessages();
   const msg = msgs.find(m => m.id === messageId);

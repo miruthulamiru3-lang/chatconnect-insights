@@ -12,6 +12,12 @@ export interface User {
   createdAt: string;
 }
 
+export interface Attachment {
+  name: string;
+  type: string; // mime type
+  data: string; // base64 data URL
+}
+
 export interface Message {
   id: string;
   senderId: string;
@@ -20,6 +26,7 @@ export interface Message {
   sentAt: string;
   readAt: string | null;
   groupId?: string; // if set, this is a group message
+  attachments?: Attachment[];
 }
 
 export interface FriendRequest {
@@ -164,7 +171,7 @@ export function login(email: string, password: string): User | string {
   return user;
 }
 
-export function sendMessage(senderId: string, receiverId: string, content: string, groupId?: string): Message {
+export function sendMessage(senderId: string, receiverId: string, content: string, groupId?: string, attachments?: Attachment[]): Message {
   const msgs = getMessages();
   const msg: Message = {
     id: crypto.randomUUID(),
@@ -174,6 +181,7 @@ export function sendMessage(senderId: string, receiverId: string, content: strin
     sentAt: new Date().toISOString(),
     readAt: null,
     groupId,
+    attachments,
   };
   msgs.push(msg);
   set(MESSAGES_KEY, msgs);

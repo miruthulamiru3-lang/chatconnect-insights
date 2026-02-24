@@ -5,12 +5,16 @@ import { Input } from "@/components/ui/input";
 import {
   getSession, getUserFriends, getConversation, sendMessage, markAsRead,
   addFriend, getUserById, setSession, getUserGroups, getGroupMessages,
-  getCallSignal, initiateCall, type User, type Message, type Group
+  getCallSignal, initiateCall, updateMessage, deleteMessage,
+  type User, type Message, type Group
 } from "@/lib/store";
 import {
   Send, LogOut, UserPlus, Check, CheckCheck, MessageCircle,
-  Phone, Video, Users
+  Phone, Video, Users, Pencil, Trash2, MoreVertical, X
 } from "lucide-react";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 import CreateGroupDialog from "@/components/chat/GroupChatPanel";
 import CallScreen from "@/components/chat/CallScreen";
 
@@ -29,6 +33,8 @@ const Chat = () => {
   const [showAddFriend, setShowAddFriend] = useState(false);
   const [showCall, setShowCall] = useState(false);
   const [tab, setTab] = useState<'chats' | 'groups'>('chats');
+  const [editingMsg, setEditingMsg] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -329,7 +335,24 @@ const Chat = () => {
                 const isMine = msg.senderId === currentUser.id;
                 const senderName = selected.type === 'group' && !isMine ? getUserById(msg.senderId)?.name : null;
                 return (
-                  <div key={msg.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
+                  <div key={msg.id} className={`flex items-end gap-1 group ${isMine ? "justify-end" : "justify-start"}`}>
+                    {isMine && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-muted">
+                            <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-32">
+                          <DropdownMenuItem onClick={() => { setEditingMsg(msg.id); setEditContent(msg.content); }}>
+                            <Pencil className="h-3.5 w-3.5 mr-2" /> Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive" onClick={() => { deleteMessage(msg.id); }}>
+                            <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                     <div className={`max-w-[70%] rounded-2xl px-4 py-2.5 ${
                       isMine
                         ? "bg-gradient-to-r from-primary to-secondary text-primary-foreground rounded-br-md"
@@ -338,7 +361,30 @@ const Chat = () => {
                       {senderName && (
                         <p className="text-xs font-semibold mb-1 opacity-70">{senderName}</p>
                       )}
-                      <p className="text-sm">{msg.content}</p>
+                      {editingMsg === msg.id ? (
+                        <div className="flex items-center gap-1">
+                          <Input
+                            value={editContent}
+                            onChange={e => setEditContent(e.target.value)}
+                            onKeyDown={e => {
+                              if (e.key === "Enter") {
+                                updateMessage(msg.id, editContent);
+                                setEditingMsg(null);
+                              }
+                            }}
+                            className="h-7 text-sm bg-white/20 border-0 text-inherit rounded-lg"
+                            autoFocus
+                          />
+                          <button onClick={() => { updateMessage(msg.id, editContent); setEditingMsg(null); }} className="p-1">
+                            <Check className="h-3.5 w-3.5" />
+                          </button>
+                          <button onClick={() => setEditingMsg(null)} className="p-1">
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <p className="text-sm">{msg.content}</p>
+                      )}
                       <div className={`flex items-center gap-1 mt-1 ${isMine ? "justify-end" : "justify-start"}`}>
                         <span className={`text-[10px] ${isMine ? "text-white/70" : "text-muted-foreground"}`}>
                           {formatTime(msg.sentAt)}

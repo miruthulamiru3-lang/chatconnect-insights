@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,23 @@ import {
   type User, type Message, type CallLog, type Group
 } from "@/lib/store";
 import { LogOut, MessageSquare, Users, Eye, EyeOff, Search, Shield, Phone, Video } from "lucide-react";
+
+const ExpandableText = ({ text, maxLength = 80 }: { text: string; maxLength?: number }) => {
+  const [expanded, setExpanded] = useState(false);
+  if (text.length <= maxLength) return <span>{text}</span>;
+  return (
+    <span>
+      {expanded ? text : text.slice(0, maxLength) + "..."}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="ml-1 text-xs font-medium underline"
+        style={{ color: "hsl(262, 83%, 58%)" }}
+      >
+        {expanded ? "Show less" : "Read more"}
+      </button>
+    </span>
+  );
+};
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -210,7 +227,9 @@ const AdminDashboard = () => {
                           </span>
                         ) : getUserName(msg.receiverId)}
                       </TableCell>
-                      <TableCell className="max-w-[200px] truncate">{msg.content}</TableCell>
+                      <TableCell className="max-w-[300px]">
+                        <ExpandableText text={msg.content} maxLength={80} />
+                      </TableCell>
                       <TableCell className="text-xs whitespace-nowrap">{formatDateTime(msg.sentAt)}</TableCell>
                       <TableCell className="text-xs whitespace-nowrap">{msg.readAt ? formatDateTime(msg.readAt) : "—"}</TableCell>
                       <TableCell>

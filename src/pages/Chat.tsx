@@ -24,17 +24,17 @@ type ChatTarget = { type: 'friend'; user: User } | { type: 'group'; group: Group
 
 const ChatExpandableText = ({ text, isMine, maxLength = 300 }: { text: string; isMine: boolean; maxLength?: number }) => {
   const [expanded, setExpanded] = useState(false);
-  if (text.length <= maxLength) return <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">{text}</p>;
+  if (text.length <= maxLength) return <p className="text-sm whitespace-pre-wrap leading-relaxed" style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}>{text}</p>;
   return (
-    <div>
-      <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
+    <div style={{ minWidth: 0 }}>
+      <p className="text-sm whitespace-pre-wrap leading-relaxed" style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}>
         {expanded ? text : text.slice(0, maxLength) + "..."}
       </p>
       <button
-        onClick={() => setExpanded(!expanded)}
+        onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
         className={`text-xs font-semibold mt-1.5 underline underline-offset-2 transition-colors ${isMine ? 'text-white/80 hover:text-white' : 'text-primary hover:text-primary/80'}`}
       >
-        {expanded ? "Show less" : "Read more"}
+        {expanded ? "Show less" : "Show more"}
       </button>
     </div>
   );
@@ -452,7 +452,7 @@ const Chat = () => {
                         </DropdownMenuContent>
                       </DropdownMenu>
                     )}
-                    <div className={`max-w-[65%] rounded-2xl px-4 py-3 shadow-sm transition-all ${
+                    <div className={`max-w-[65%] rounded-2xl px-4 py-3 shadow-sm transition-all overflow-hidden ${
                       isMine
                         ? "bg-gradient-to-br from-primary to-primary/90 text-primary-foreground rounded-br-md shadow-glow"
                         : "bg-card text-foreground rounded-bl-md border border-border/30"

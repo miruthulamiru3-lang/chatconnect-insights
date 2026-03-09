@@ -13,18 +13,18 @@ import { LogOut, MessageSquare, Users, Eye, EyeOff, Search, Shield, Phone, Video
 
 const ExpandableText = ({ text, maxLength = 80 }: { text: string; maxLength?: number }) => {
   const [expanded, setExpanded] = useState(false);
-  if (text.length <= maxLength) return <span>{text}</span>;
+  if (text.length <= maxLength) return <span className="whitespace-pre-wrap break-words">{text}</span>;
   return (
-    <span>
+    <div className="whitespace-pre-wrap break-words" style={{ wordBreak: "break-word", overflowWrap: "anywhere" }}>
       {expanded ? text : text.slice(0, maxLength) + "..."}
       <button
-        onClick={() => setExpanded(!expanded)}
-        className="ml-1 text-xs font-semibold underline underline-offset-2 transition-colors"
+        onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
+        className="ml-1 text-xs font-semibold underline underline-offset-2 transition-colors inline"
         style={{ color: "hsl(262, 83%, 65%)" }}
       >
-        {expanded ? "Show less" : "Read more"}
+        {expanded ? "Show less" : "Show more"}
       </button>
-    </span>
+    </div>
   );
 };
 
@@ -278,7 +278,7 @@ const AdminDashboard = () => {
                           </span>
                         ) : getUserName(msg.receiverId)}
                       </TableCell>
-                      <TableCell className="max-w-[300px] text-sm">
+                      <TableCell className="text-sm" style={{ maxWidth: "300px", wordBreak: "break-word", overflowWrap: "anywhere" }}>
                         <ExpandableText text={msg.content} maxLength={80} />
                       </TableCell>
                       <TableCell className="text-xs whitespace-nowrap font-medium" style={{ color: "hsl(220, 10%, 50%)" }}>{formatDateTime(msg.sentAt)}</TableCell>

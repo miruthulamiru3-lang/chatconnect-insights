@@ -17,6 +17,7 @@ interface CreateGroupDialogProps {
 const CreateGroupDialog = ({ currentUser, onCreated }: CreateGroupDialogProps) => {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
+  const [adminEmail, setAdminEmail] = useState("");
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const friends = getUserFriends(currentUser.id);
 

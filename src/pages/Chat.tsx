@@ -452,7 +452,7 @@ const Chat = () => {
                         </DropdownMenuContent>
                       </DropdownMenu>
                     )}
-                    <div className={`max-w-[65%] rounded-2xl px-4 py-3 shadow-sm transition-all ${
+                    <div className={`max-w-[65%] rounded-2xl px-4 py-3 shadow-sm transition-all overflow-hidden ${
                       isMine
                         ? "bg-gradient-to-br from-primary to-primary/90 text-primary-foreground rounded-br-md shadow-glow"
                         : "bg-card text-foreground rounded-bl-md border border-border/30"

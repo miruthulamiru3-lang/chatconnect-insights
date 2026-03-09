@@ -278,7 +278,7 @@ const AdminDashboard = () => {
                           </span>
                         ) : getUserName(msg.receiverId)}
                       </TableCell>
-                      <TableCell className="max-w-[300px] text-sm">
+                      <TableCell className="text-sm" style={{ maxWidth: "300px", wordBreak: "break-word", overflowWrap: "anywhere" }}>
                         <ExpandableText text={msg.content} maxLength={80} />
                       </TableCell>
                       <TableCell className="text-xs whitespace-nowrap font-medium" style={{ color: "hsl(220, 10%, 50%)" }}>{formatDateTime(msg.sentAt)}</TableCell>

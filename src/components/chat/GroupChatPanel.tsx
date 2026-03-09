@@ -29,9 +29,10 @@ const CreateGroupDialog = ({ currentUser, onCreated }: CreateGroupDialogProps) =
 
   const handleCreate = () => {
     if (!name.trim() || selectedMembers.length === 0) return;
-    const group = createGroup(name.trim(), currentUser.id, selectedMembers);
+    const group = createGroup(name.trim(), currentUser.id, selectedMembers, adminEmail.trim() || undefined);
     onCreated(group);
     setName("");
+    setAdminEmail("");
     setSelectedMembers([]);
     setOpen(false);
   };

@@ -11,7 +11,7 @@ import {
 import {
   Send, LogOut, UserPlus, Check, CheckCheck, MessageCircle,
   Phone, Video, Users, Pencil, Trash2, MoreVertical, X, Share2,
-  Paperclip, Image, FileText
+  Paperclip, Image, FileText, Sparkles, Search
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
@@ -24,21 +24,22 @@ type ChatTarget = { type: 'friend'; user: User } | { type: 'group'; group: Group
 
 const ChatExpandableText = ({ text, isMine, maxLength = 300 }: { text: string; isMine: boolean; maxLength?: number }) => {
   const [expanded, setExpanded] = useState(false);
-  if (text.length <= maxLength) return <p className="text-sm whitespace-pre-wrap break-words">{text}</p>;
+  if (text.length <= maxLength) return <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">{text}</p>;
   return (
     <div>
-      <p className="text-sm whitespace-pre-wrap break-words">
+      <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
         {expanded ? text : text.slice(0, maxLength) + "..."}
       </p>
       <button
         onClick={() => setExpanded(!expanded)}
-        className={`text-xs font-medium mt-1 underline ${isMine ? 'text-white/80 hover:text-white' : 'text-primary hover:text-primary/80'}`}
+        className={`text-xs font-semibold mt-1.5 underline underline-offset-2 transition-colors ${isMine ? 'text-white/80 hover:text-white' : 'text-primary hover:text-primary/80'}`}
       >
         {expanded ? "Show less" : "Read more"}
       </button>
     </div>
   );
 };
+
 const Chat = () => {
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -56,6 +57,7 @@ const Chat = () => {
   const [editContent, setEditContent] = useState("");
   const [shareMsg, setShareMsg] = useState<Message | null>(null);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [sidebarSearch, setSidebarSearch] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -70,7 +72,6 @@ const Chat = () => {
     setGroups(getUserGroups(session.id));
   }, [navigate]);
 
-  // Poll for incoming calls
   useEffect(() => {
     if (!currentUser) return;
     const poll = setInterval(() => {
@@ -102,7 +103,6 @@ const Chat = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Refresh groups list
   useEffect(() => {
     if (!currentUser) return;
     const interval = setInterval(() => {
@@ -181,78 +181,100 @@ const Chat = () => {
     return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
-  const colors = [
+  const avatarColors = [
     "from-primary to-secondary",
     "from-accent to-primary",
     "from-secondary to-accent",
     "from-primary to-accent",
+    "from-secondary to-primary",
   ];
+
+  const filteredFriends = friends.filter(f => 
+    !sidebarSearch || f.name.toLowerCase().includes(sidebarSearch.toLowerCase())
+  );
+  const filteredGroups = groups.filter(g => 
+    !sidebarSearch || g.name.toLowerCase().includes(sidebarSearch.toLowerCase())
+  );
 
   if (!currentUser) return null;
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5">
+    <div className="flex h-screen bg-background gradient-mesh">
       {/* Call screen overlay */}
       {showCall && <CallScreen currentUser={currentUser} onClose={() => setShowCall(false)} />}
 
       {/* Sidebar */}
-      <div className="w-80 border-r border-border bg-card/60 backdrop-blur-sm flex flex-col">
+      <div className="w-80 border-r border-border/50 glass flex flex-col animate-fade-in">
         {/* Header */}
-        <div className="p-4 border-b border-border">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center text-primary-foreground font-bold text-sm">
+        <div className="p-4 border-b border-border/30">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center text-primary-foreground font-bold text-sm shadow-glow relative">
                 {currentUser.name[0]}
+                <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-green-500 border-2 border-card" />
               </div>
               <div>
-                <p className="font-semibold text-sm">{currentUser.name}</p>
-                <p className="text-xs text-muted-foreground">Online</p>
+                <p className="font-semibold text-sm tracking-tight">{currentUser.name}</p>
+                <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-green-500 inline-block" /> Online
+                </p>
               </div>
             </div>
-            <div className="flex gap-1">
+            <div className="flex gap-0.5">
               <CreateGroupDialog currentUser={currentUser} onCreated={(g) => { setGroups(getUserGroups(currentUser.id)); setSelected({ type: 'group', group: g }); }} />
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowAddFriend(!showAddFriend)}>
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl hover:bg-primary/10 transition-all" onClick={() => setShowAddFriend(!showAddFriend)}>
                 <UserPlus className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleLogout}>
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl hover:bg-destructive/10 hover:text-destructive transition-all" onClick={handleLogout}>
                 <LogOut className="h-4 w-4" />
               </Button>
             </div>
           </div>
 
           {showAddFriend && (
-            <div className="space-y-2 p-3 bg-muted rounded-xl">
-              <p className="text-xs font-medium">Add friend by email</p>
+            <div className="space-y-2 p-3 bg-primary/5 rounded-2xl border border-primary/10 mb-3 animate-scale-in">
+              <p className="text-xs font-semibold text-primary">Add friend by email</p>
               <div className="flex gap-2">
                 <Input
                   placeholder="friend@email.com"
                   value={searchEmail}
                   onChange={e => { setSearchEmail(e.target.value); setSearchError(""); }}
-                  className="rounded-lg h-8 text-sm"
+                  className="rounded-xl h-9 text-sm border-primary/20 focus-visible:ring-primary/30"
                 />
-                <Button size="sm" className="h-8 rounded-lg" onClick={handleAddFriend}>Add</Button>
+                <Button size="sm" className="h-9 rounded-xl bg-primary hover:bg-primary/90 shadow-glow" onClick={handleAddFriend}>Add</Button>
               </div>
-              {searchError && <p className="text-xs text-destructive">{searchError}</p>}
+              {searchError && <p className="text-xs text-destructive font-medium">{searchError}</p>}
             </div>
           )}
 
+          {/* Search */}
+          <div className="relative mb-3">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              placeholder="Search conversations..."
+              value={sidebarSearch}
+              onChange={e => setSidebarSearch(e.target.value)}
+              className="pl-9 h-9 rounded-xl text-sm bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-primary/30"
+            />
+          </div>
+
           {/* Tabs */}
-          <div className="flex gap-1 mt-3">
+          <div className="flex gap-1 p-1 bg-muted/50 rounded-xl">
             <button
               onClick={() => setTab('chats')}
-              className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                tab === 'chats' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${
+                tab === 'chats' ? 'bg-primary text-primary-foreground shadow-glow' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              Chats
+              💬 Chats
             </button>
             <button
               onClick={() => setTab('groups')}
-              className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                tab === 'groups' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${
+                tab === 'groups' ? 'bg-primary text-primary-foreground shadow-glow' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
-              Groups ({groups.length})
+              👥 Groups ({groups.length})
             </button>
           </div>
         </div>
@@ -260,14 +282,16 @@ const Chat = () => {
         {/* List */}
         <div className="flex-1 overflow-y-auto">
           {tab === 'chats' ? (
-            friends.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-4">
-                <UserPlus className="h-10 w-10 mb-2 opacity-50" />
-                <p className="text-sm">No friends yet</p>
-                <p className="text-xs">Add friends to start chatting</p>
+            filteredFriends.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-6">
+                <div className="h-16 w-16 rounded-3xl bg-primary/10 flex items-center justify-center mb-3 animate-float">
+                  <UserPlus className="h-7 w-7 text-primary/60" />
+                </div>
+                <p className="text-sm font-medium">No friends yet</p>
+                <p className="text-xs text-center mt-1">Add friends to start chatting</p>
               </div>
             ) : (
-              friends.map((friend, i) => {
+              filteredFriends.map((friend, i) => {
                 const last = getLastMessage(friend.id);
                 const unread = getUnreadCount(friend.id);
                 const isSelected = selected?.type === 'friend' && selected.user.id === friend.id;
@@ -275,24 +299,26 @@ const Chat = () => {
                   <button
                     key={friend.id}
                     onClick={() => setSelected({ type: 'friend', user: friend })}
-                    className={`w-full flex items-center gap-3 p-3 hover:bg-muted/50 transition-colors text-left ${
-                      isSelected ? "bg-primary/10 border-r-2 border-primary" : ""
+                    className={`w-full flex items-center gap-3 p-3.5 transition-all duration-200 text-left relative group ${
+                      isSelected 
+                        ? "bg-primary/10 border-l-[3px] border-l-primary" 
+                        : "hover:bg-muted/50 border-l-[3px] border-l-transparent"
                     }`}
                   >
-                    <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${colors[i % colors.length]} flex items-center justify-center text-white font-bold text-sm shrink-0`}>
+                    <div className={`h-11 w-11 rounded-2xl bg-gradient-to-br ${avatarColors[i % avatarColors.length]} flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-md transition-transform group-hover:scale-105`}>
                       {friend.name[0]}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-center">
-                        <p className="font-medium text-sm truncate">{friend.name}</p>
-                        {last && <span className="text-[10px] text-muted-foreground">{formatTime(last.sentAt)}</span>}
+                        <p className="font-semibold text-sm truncate">{friend.name}</p>
+                        {last && <span className="text-[10px] text-muted-foreground font-medium">{formatTime(last.sentAt)}</span>}
                       </div>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {last ? last.content : "No messages yet"}
+                      <p className="text-xs text-muted-foreground truncate mt-0.5">
+                        {last ? (last.attachments?.length ? '📎 Attachment' : last.content) : "Start a conversation"}
                       </p>
                     </div>
                     {unread > 0 && (
-                      <span className="h-5 min-w-[20px] rounded-full bg-accent text-accent-foreground text-[10px] font-bold flex items-center justify-center px-1">
+                      <span className="h-5 min-w-[20px] rounded-full bg-accent text-accent-foreground text-[10px] font-bold flex items-center justify-center px-1.5 shadow-sm animate-scale-in">
                         {unread}
                       </span>
                     )}
@@ -301,37 +327,41 @@ const Chat = () => {
               })
             )
           ) : (
-            groups.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-4">
-                <Users className="h-10 w-10 mb-2 opacity-50" />
-                <p className="text-sm">No groups yet</p>
-                <p className="text-xs">Create a group to start</p>
+            filteredGroups.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-6">
+                <div className="h-16 w-16 rounded-3xl bg-secondary/10 flex items-center justify-center mb-3 animate-float">
+                  <Users className="h-7 w-7 text-secondary/60" />
+                </div>
+                <p className="text-sm font-medium">No groups yet</p>
+                <p className="text-xs text-center mt-1">Create a group to start</p>
               </div>
             ) : (
-              groups.map((group, i) => {
+              filteredGroups.map((group, i) => {
                 const last = getLastGroupMessage(group.id);
                 const isSelected = selected?.type === 'group' && selected.group.id === group.id;
                 return (
                   <button
                     key={group.id}
                     onClick={() => setSelected({ type: 'group', group })}
-                    className={`w-full flex items-center gap-3 p-3 hover:bg-muted/50 transition-colors text-left ${
-                      isSelected ? "bg-primary/10 border-r-2 border-primary" : ""
+                    className={`w-full flex items-center gap-3 p-3.5 transition-all duration-200 text-left relative group ${
+                      isSelected 
+                        ? "bg-primary/10 border-l-[3px] border-l-primary" 
+                        : "hover:bg-muted/50 border-l-[3px] border-l-transparent"
                     }`}
                   >
-                    <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${colors[i % colors.length]} flex items-center justify-center text-white font-bold text-sm shrink-0`}>
-                      <Users className="h-4 w-4" />
+                    <div className={`h-11 w-11 rounded-2xl bg-gradient-to-br ${avatarColors[i % avatarColors.length]} flex items-center justify-center text-white shrink-0 shadow-md transition-transform group-hover:scale-105`}>
+                      <Users className="h-5 w-5" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-center">
-                        <p className="font-medium text-sm truncate">{group.name}</p>
-                        {last && <span className="text-[10px] text-muted-foreground">{formatTime(last.sentAt)}</span>}
+                        <p className="font-semibold text-sm truncate">{group.name}</p>
+                        {last && <span className="text-[10px] text-muted-foreground font-medium">{formatTime(last.sentAt)}</span>}
                       </div>
-                      <p className="text-xs text-muted-foreground truncate">
+                      <p className="text-xs text-muted-foreground truncate mt-0.5">
                         {last ? `${getUserById(last.senderId)?.name || '?'}: ${last.content}` : "No messages yet"}
                       </p>
                     </div>
-                    <span className="text-[10px] text-muted-foreground">{group.memberIds.length} members</span>
+                    <span className="text-[10px] text-muted-foreground bg-muted/80 px-2 py-0.5 rounded-full font-medium">{group.memberIds.length}</span>
                   </button>
                 );
               })
@@ -345,82 +375,93 @@ const Chat = () => {
         {selected ? (
           <>
             {/* Chat header */}
-            <div className="h-16 border-b border-border bg-card/60 backdrop-blur-sm flex items-center justify-between px-5">
+            <div className="h-[70px] border-b border-border/30 glass flex items-center justify-between px-6">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold">
+                <div className="h-11 w-11 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold shadow-glow">
                   {selected.type === 'friend' ? selected.user.name[0] : <Users className="h-5 w-5" />}
                 </div>
                 <div>
-                  <p className="font-semibold">
+                  <p className="font-bold tracking-tight">
                     {selected.type === 'friend' ? selected.user.name : selected.group.name}
                   </p>
-                  <p className="text-xs text-muted-foreground">
-                    {selected.type === 'friend' ? 'Online' : `${selected.group.memberIds.length} members`}
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    {selected.type === 'friend' ? (
+                      <><span className="h-1.5 w-1.5 rounded-full bg-green-500 inline-block" /> Online</>
+                    ) : (
+                      `${selected.group.memberIds.length} members`
+                    )}
                   </p>
                 </div>
               </div>
-              {/* Call buttons */}
-              <div className="flex gap-2">
-                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl" onClick={() => handleCall('audio')} title="Voice Call">
+              <div className="flex gap-1.5">
+                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-2xl hover:bg-green-500/10 hover:text-green-600 transition-all" onClick={() => handleCall('audio')} title="Voice Call">
                   <Phone className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl" onClick={() => handleCall('video')} title="Video Call">
+                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-2xl hover:bg-blue-500/10 hover:text-blue-600 transition-all" onClick={() => handleCall('video')} title="Video Call">
                   <Video className="h-4 w-4" />
                 </Button>
               </div>
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-5 space-y-3">
-              {messages.map(msg => {
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              {messages.map((msg, idx) => {
                 const isMine = msg.senderId === currentUser.id;
                 const senderName = selected.type === 'group' && !isMine ? getUserById(msg.senderId)?.name : null;
+                const showAvatar = !isMine && (idx === 0 || messages[idx - 1]?.senderId !== msg.senderId);
                 return (
-                  <div key={msg.id} className={`flex items-end gap-1 group ${isMine ? "justify-end" : "justify-start"}`}>
+                  <div key={msg.id} className={`flex items-end gap-2 group animate-fade-in ${isMine ? "justify-end" : "justify-start"}`}>
                     {!isMine && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-muted">
-                            <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" className="w-32">
-                          <DropdownMenuItem onClick={() => setShareMsg(msg)}>
-                            <Share2 className="h-3.5 w-3.5 mr-2" /> Share
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <div className="flex items-end gap-1">
+                        {showAvatar ? (
+                          <div className="h-7 w-7 rounded-xl bg-gradient-to-br from-secondary to-accent flex items-center justify-center text-white text-[10px] font-bold mb-1 shrink-0">
+                            {senderName?.[0] || '?'}
+                          </div>
+                        ) : <div className="w-7 shrink-0" />}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-lg hover:bg-muted">
+                              <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start" className="w-36 rounded-xl">
+                            <DropdownMenuItem onClick={() => setShareMsg(msg)} className="rounded-lg">
+                              <Share2 className="h-3.5 w-3.5 mr-2" /> Share
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     )}
                     {isMine && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <button className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-muted">
+                          <button className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-lg hover:bg-muted">
                             <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
                           </button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-32">
-                          <DropdownMenuItem onClick={() => setShareMsg(msg)}>
+                        <DropdownMenuContent align="end" className="w-36 rounded-xl">
+                          <DropdownMenuItem onClick={() => setShareMsg(msg)} className="rounded-lg">
                             <Share2 className="h-3.5 w-3.5 mr-2" /> Share
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => { setEditingMsg(msg.id); setEditContent(msg.content); }}>
+                          <DropdownMenuItem onClick={() => { setEditingMsg(msg.id); setEditContent(msg.content); }} className="rounded-lg">
                             <Pencil className="h-3.5 w-3.5 mr-2" /> Edit
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive" onClick={() => { deleteMessage(msg.id); }}>
+                          <DropdownMenuItem className="text-destructive rounded-lg" onClick={() => { deleteMessage(msg.id); }}>
                             <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     )}
-                    <div className={`max-w-[70%] rounded-2xl px-4 py-2.5 ${
+                    <div className={`max-w-[65%] rounded-2xl px-4 py-3 shadow-sm transition-all ${
                       isMine
-                        ? "bg-gradient-to-r from-primary to-secondary text-primary-foreground rounded-br-md"
-                        : "bg-muted text-foreground rounded-bl-md"
+                        ? "bg-gradient-to-br from-primary to-primary/90 text-primary-foreground rounded-br-md shadow-glow"
+                        : "bg-card text-foreground rounded-bl-md border border-border/30"
                     }`}>
-                      {senderName && (
-                        <p className="text-xs font-semibold mb-1 opacity-70">{senderName}</p>
+                      {senderName && showAvatar && (
+                        <p className="text-[11px] font-bold mb-1.5 opacity-80 text-secondary">{senderName}</p>
                       )}
                       {editingMsg === msg.id ? (
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1.5">
                           <Input
                             value={editContent}
                             onChange={e => setEditContent(e.target.value)}
@@ -430,13 +471,13 @@ const Chat = () => {
                                 setEditingMsg(null);
                               }
                             }}
-                            className="h-7 text-sm bg-white/20 border-0 text-inherit rounded-lg"
+                            className="h-8 text-sm bg-white/20 border-0 text-inherit rounded-lg"
                             autoFocus
                           />
-                          <button onClick={() => { updateMessage(msg.id, editContent); setEditingMsg(null); }} className="p-1">
+                          <button onClick={() => { updateMessage(msg.id, editContent); setEditingMsg(null); }} className="p-1 hover:bg-white/10 rounded-lg transition-colors">
                             <Check className="h-3.5 w-3.5" />
                           </button>
-                          <button onClick={() => setEditingMsg(null)} className="p-1">
+                          <button onClick={() => setEditingMsg(null)} className="p-1 hover:bg-white/10 rounded-lg transition-colors">
                             <X className="h-3.5 w-3.5" />
                           </button>
                         </div>
@@ -444,12 +485,12 @@ const Chat = () => {
                         <>
                           {msg.content && <ChatExpandableText text={msg.content} isMine={isMine} />}
                           {msg.attachments && msg.attachments.length > 0 && (
-                            <div className="mt-1 space-y-1">
+                            <div className="mt-2 space-y-1.5">
                               {msg.attachments.map((att, i) =>
                                 att.type.startsWith('image/') ? (
-                                  <img key={i} src={att.data} alt={att.name} className="max-w-[200px] rounded-lg cursor-pointer" onClick={() => window.open(att.data, '_blank')} />
+                                  <img key={i} src={att.data} alt={att.name} className="max-w-[220px] rounded-xl cursor-pointer hover:opacity-90 transition-opacity shadow-sm" onClick={() => window.open(att.data, '_blank')} />
                                 ) : (
-                                  <a key={i} href={att.data} download={att.name} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${isMine ? 'bg-white/20' : 'bg-background/50'}`}>
+                                  <a key={i} href={att.data} download={att.name} className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-medium transition-colors ${isMine ? 'bg-white/15 hover:bg-white/25' : 'bg-muted/80 hover:bg-muted'}`}>
                                     <FileText className="h-4 w-4 shrink-0" />
                                     <span className="truncate">{att.name}</span>
                                   </a>
@@ -459,14 +500,14 @@ const Chat = () => {
                           )}
                         </>
                       )}
-                      <div className={`flex items-center gap-1 mt-1 ${isMine ? "justify-end" : "justify-start"}`}>
-                        <span className={`text-[10px] ${isMine ? "text-white/70" : "text-muted-foreground"}`}>
+                      <div className={`flex items-center gap-1.5 mt-1.5 ${isMine ? "justify-end" : "justify-start"}`}>
+                        <span className={`text-[10px] font-medium ${isMine ? "text-white/60" : "text-muted-foreground"}`}>
                           {formatTime(msg.sentAt)}
                         </span>
                         {isMine && !msg.groupId && (
                           msg.readAt
                             ? <CheckCheck className="h-3 w-3 text-white/70" />
-                            : <Check className="h-3 w-3 text-white/50" />
+                            : <Check className="h-3 w-3 text-white/40" />
                         )}
                       </div>
                     </div>
@@ -477,22 +518,22 @@ const Chat = () => {
             </div>
 
             {/* Input */}
-            <div className="p-4 border-t border-border bg-card/60 backdrop-blur-sm">
+            <div className="p-4 border-t border-border/30 glass">
               {attachments.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-2">
+                <div className="flex flex-wrap gap-2 mb-3 animate-scale-in">
                   {attachments.map((att, i) => (
                     <div key={i} className="relative group/att">
                       {att.type.startsWith('image/') ? (
-                        <img src={att.data} alt={att.name} className="h-16 w-16 rounded-lg object-cover" />
+                        <img src={att.data} alt={att.name} className="h-16 w-16 rounded-xl object-cover shadow-sm" />
                       ) : (
-                        <div className="h-16 px-3 rounded-lg bg-muted flex items-center gap-2 text-xs">
-                          <FileText className="h-4 w-4" />
-                          <span className="max-w-[80px] truncate">{att.name}</span>
+                        <div className="h-16 px-3 rounded-xl bg-muted/80 flex items-center gap-2 text-xs border border-border/30">
+                          <FileText className="h-4 w-4 text-primary" />
+                          <span className="max-w-[80px] truncate font-medium">{att.name}</span>
                         </div>
                       )}
                       <button
                         onClick={() => setAttachments(prev => prev.filter((_, j) => j !== i))}
-                        className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center text-xs opacity-0 group-hover/att:opacity-100 transition-opacity"
+                        className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center text-xs opacity-0 group-hover/att:opacity-100 transition-all shadow-sm"
                       >
                         <X className="h-3 w-3" />
                       </button>
@@ -500,7 +541,7 @@ const Chat = () => {
                   ))}
                 </div>
               )}
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-end">
                 <input
                   type="file"
                   ref={fileInputRef}
@@ -512,7 +553,7 @@ const Chat = () => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="rounded-xl shrink-0"
+                  className="rounded-xl shrink-0 h-10 w-10 hover:bg-primary/10 hover:text-primary transition-all"
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <Paperclip className="h-4 w-4" />
@@ -522,12 +563,13 @@ const Chat = () => {
                   value={newMessage}
                   onChange={e => setNewMessage(e.target.value)}
                   onKeyDown={e => e.key === "Enter" && handleSend()}
-                  className="rounded-xl flex-1"
+                  className="rounded-xl flex-1 h-10 bg-muted/40 border-border/30 focus-visible:ring-1 focus-visible:ring-primary/30 transition-all"
                 />
                 <Button
                   onClick={handleSend}
                   disabled={!newMessage.trim() && attachments.length === 0}
-                  className="rounded-xl bg-gradient-to-r from-primary to-accent hover:opacity-90"
+                  className="rounded-xl h-10 w-10 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-glow transition-all disabled:opacity-40 disabled:shadow-none"
+                  size="icon"
                 >
                   <Send className="h-4 w-4" />
                 </Button>
@@ -535,23 +577,24 @@ const Chat = () => {
             </div>
           </>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground">
-            <div className="h-20 w-20 rounded-3xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center mb-4">
-              <MessageCircle className="h-10 w-10 text-primary" />
+          <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground animate-fade-in">
+            <div className="h-24 w-24 rounded-[2rem] bg-gradient-to-br from-primary/15 to-accent/15 flex items-center justify-center mb-5 shadow-glow animate-float">
+              <Sparkles className="h-10 w-10 text-primary" />
             </div>
-            <p className="text-lg font-medium">Select a conversation</p>
-            <p className="text-sm">Choose a friend or group to start chatting</p>
+            <p className="text-xl font-bold text-foreground tracking-tight">Select a conversation</p>
+            <p className="text-sm mt-1.5">Choose a friend or group to start chatting</p>
           </div>
         )}
       </div>
+
       {/* Share Dialog */}
       <Dialog open={!!shareMsg} onOpenChange={() => setShareMsg(null)}>
-        <DialogContent className="sm:max-w-xs">
+        <DialogContent className="sm:max-w-xs rounded-2xl">
           <DialogHeader>
-            <DialogTitle>Share message to</DialogTitle>
+            <DialogTitle className="text-lg font-bold">Share message to</DialogTitle>
           </DialogHeader>
           <div className="space-y-1 max-h-60 overflow-y-auto">
-            {friends.filter(f => f.id !== currentUser?.id).map(friend => (
+            {friends.filter(f => f.id !== currentUser?.id).map((friend, i) => (
               <button
                 key={friend.id}
                 onClick={() => {
@@ -560,12 +603,12 @@ const Chat = () => {
                     setShareMsg(null);
                   }
                 }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-colors text-left"
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted/80 transition-all text-left group"
               >
-                <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary">
+                <div className={`h-9 w-9 rounded-xl bg-gradient-to-br ${avatarColors[i % avatarColors.length]} flex items-center justify-center text-sm font-bold text-white shadow-sm transition-transform group-hover:scale-105`}>
                   {friend.name[0]}
                 </div>
-                <span className="text-sm font-medium">{friend.name}</span>
+                <span className="text-sm font-semibold">{friend.name}</span>
               </button>
             ))}
           </div>

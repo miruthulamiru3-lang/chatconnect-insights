@@ -56,6 +56,12 @@ const CreateGroupDialog = ({ currentUser, onCreated }: CreateGroupDialogProps) =
             onChange={e => setName(e.target.value)}
             className="rounded-xl"
           />
+          <Input
+            placeholder="Admin email to track this group (e.g., project@admin.com)"
+            value={adminEmail}
+            onChange={e => setAdminEmail(e.target.value)}
+            className="rounded-xl"
+          />
           <div className="space-y-2">
             <p className="text-sm font-medium text-muted-foreground">Select members</p>
             {friends.length === 0 ? (

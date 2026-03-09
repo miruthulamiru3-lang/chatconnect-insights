@@ -22,6 +22,23 @@ import CallScreen from "@/components/chat/CallScreen";
 
 type ChatTarget = { type: 'friend'; user: User } | { type: 'group'; group: Group };
 
+const ChatExpandableText = ({ text, isMine, maxLength = 300 }: { text: string; isMine: boolean; maxLength?: number }) => {
+  const [expanded, setExpanded] = useState(false);
+  if (text.length <= maxLength) return <p className="text-sm whitespace-pre-wrap break-words">{text}</p>;
+  return (
+    <div>
+      <p className="text-sm whitespace-pre-wrap break-words">
+        {expanded ? text : text.slice(0, maxLength) + "..."}
+      </p>
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className={`text-xs font-medium mt-1 underline ${isMine ? 'text-white/80 hover:text-white' : 'text-primary hover:text-primary/80'}`}
+      >
+        {expanded ? "Show less" : "Read more"}
+      </button>
+    </div>
+  );
+};
 const Chat = () => {
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState<User | null>(null);

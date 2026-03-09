@@ -42,6 +42,7 @@ export interface Group {
   creatorId: string;
   memberIds: string[];
   createdAt: string;
+  adminEmail?: string; // admin email that can track this group (e.g., project@admin.com)
 }
 
 export interface CallLog {

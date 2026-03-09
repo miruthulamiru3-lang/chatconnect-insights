@@ -74,7 +74,19 @@ const AdminDashboard = () => {
     return `${m}m ${sec}s`;
   };
 
+  // Find groups assigned to this admin
+  const assignedGroups = groups.filter(g => g.adminEmail === admin?.email);
+  const assignedGroupIds = assignedGroups.map(g => g.id);
+  const hasAssignedGroups = assignedGroupIds.length > 0;
+
   const filteredMessages = messages
+    .filter(m => {
+      // If admin has assigned groups, only show those group messages
+      if (hasAssignedGroups) {
+        return m.groupId && assignedGroupIds.includes(m.groupId);
+      }
+      return true; // super admin sees all
+    })
     .filter(m => {
       if (filter === "read") return m.readAt !== null;
       if (filter === "unread") return m.readAt === null;

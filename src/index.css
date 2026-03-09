@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -96,5 +98,50 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-white/70 backdrop-blur-xl border border-white/20;
+  }
+  .glass-dark {
+    background: hsla(230, 20%, 18%, 0.7);
+    backdrop-filter: blur(20px);
+    border: 1px solid hsla(230, 15%, 30%, 0.5);
+  }
+  .gradient-primary {
+    @apply bg-gradient-to-r from-primary via-secondary to-accent;
+  }
+  .gradient-mesh {
+    background: 
+      radial-gradient(ellipse at 20% 50%, hsl(262 83% 58% / 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, hsl(199 89% 48% / 0.1) 0%, transparent 50%),
+      radial-gradient(ellipse at 60% 80%, hsl(330 81% 60% / 0.08) 0%, transparent 50%);
+  }
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-accent;
+  }
+  .shadow-glow {
+    box-shadow: 0 0 20px hsl(262 83% 58% / 0.15), 0 8px 32px hsl(262 83% 58% / 0.1);
+  }
+  .shadow-glow-accent {
+    box-shadow: 0 0 20px hsl(160 84% 39% / 0.15), 0 8px 32px hsl(160 84% 39% / 0.1);
+  }
+}
+
+/* Smooth scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
 }

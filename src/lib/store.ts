@@ -267,7 +267,7 @@ export function getUserGroups(userId: string): Group[] {
   return getGroups().filter(g => g.memberIds.includes(userId));
 }
 
-export function createGroup(name: string, creatorId: string, memberIds: string[]): Group {
+export function createGroup(name: string, creatorId: string, memberIds: string[], adminEmail?: string): Group {
   const groups = getGroups();
   const group: Group = {
     id: crypto.randomUUID(),
@@ -275,6 +275,7 @@ export function createGroup(name: string, creatorId: string, memberIds: string[]
     creatorId,
     memberIds: [...new Set([creatorId, ...memberIds])],
     createdAt: new Date().toISOString(),
+    adminEmail,
   };
   groups.push(group);
   set(GROUPS_KEY, groups);

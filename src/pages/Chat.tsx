@@ -425,7 +425,7 @@ const Chat = () => {
                         </div>
                       ) : (
                         <>
-                          {msg.content && <p className="text-sm">{msg.content}</p>}
+                          {msg.content && <ChatExpandableText text={msg.content} isMine={isMine} />}
                           {msg.attachments && msg.attachments.length > 0 && (
                             <div className="mt-1 space-y-1">
                               {msg.attachments.map((att, i) =>

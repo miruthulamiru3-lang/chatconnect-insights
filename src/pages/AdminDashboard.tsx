@@ -328,18 +328,20 @@ const AdminDashboard = () => {
                   <TableHead style={{ color: "hsl(220, 10%, 55%)" }}>Group Name</TableHead>
                   <TableHead style={{ color: "hsl(220, 10%, 55%)" }}>Creator</TableHead>
                   <TableHead style={{ color: "hsl(220, 10%, 55%)" }}>Members</TableHead>
+                  <TableHead style={{ color: "hsl(220, 10%, 55%)" }}>Admin Email</TableHead>
                   <TableHead style={{ color: "hsl(220, 10%, 55%)" }}>Created</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {groups.length === 0 ? (
-                  <TableRow><TableCell colSpan={4} className="text-center py-10" style={{ color: "hsl(220, 10%, 55%)" }}>No groups yet</TableCell></TableRow>
+                {displayGroups.length === 0 ? (
+                  <TableRow><TableCell colSpan={5} className="text-center py-10" style={{ color: "hsl(220, 10%, 55%)" }}>No groups yet</TableCell></TableRow>
                 ) : (
-                  groups.map(group => (
+                  displayGroups.map(group => (
                     <TableRow key={group.id} style={{ borderColor: "hsl(230, 15%, 25%)" }} className="hover:bg-white/5">
                       <TableCell className="font-medium">{group.name}</TableCell>
                       <TableCell>{getUserName(group.creatorId)}</TableCell>
                       <TableCell>{group.memberIds.map(id => getUserName(id)).join(', ')}</TableCell>
+                      <TableCell className="text-xs">{group.adminEmail || '—'}</TableCell>
                       <TableCell className="text-xs whitespace-nowrap">{formatDateTime(group.createdAt)}</TableCell>
                     </TableRow>
                   ))

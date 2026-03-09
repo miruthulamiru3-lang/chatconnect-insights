@@ -112,11 +112,12 @@ const AdminDashboard = () => {
     })
     .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
 
+  const displayGroups = hasAssignedGroups ? assignedGroups : groups;
   const totalUsers = users.filter(u => u.role === "user").length;
-  const totalMessages = messages.length;
-  const unreadMessages = messages.filter(m => !m.readAt).length;
-  const totalCalls = callLogs.length;
-  const totalGroups = groups.length;
+  const totalMessages = filteredMessages.length;
+  const unreadMessages = filteredMessages.filter(m => !m.readAt).length;
+  const totalCalls = filteredCalls.length;
+  const totalGroups = displayGroups.length;
 
   if (!admin) return null;
 

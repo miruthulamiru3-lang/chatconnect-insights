@@ -131,7 +131,11 @@ const AdminDashboard = () => {
           </div>
           <div>
             <h1 className="text-lg font-bold">Admin Dashboard</h1>
-            <p className="text-xs" style={{ color: "hsl(220, 10%, 55%)" }}>Communication Tracking System</p>
+            <p className="text-xs" style={{ color: "hsl(220, 10%, 55%)" }}>
+              {hasAssignedGroups
+                ? `Tracking: ${assignedGroups.map(g => g.name).join(', ')}`
+                : 'Communication Tracking System (All)'}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-3">

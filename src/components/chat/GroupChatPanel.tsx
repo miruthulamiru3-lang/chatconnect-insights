@@ -17,6 +17,7 @@ interface CreateGroupDialogProps {
 const CreateGroupDialog = ({ currentUser, onCreated }: CreateGroupDialogProps) => {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
+  const [adminEmail, setAdminEmail] = useState("");
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const friends = getUserFriends(currentUser.id);
 
@@ -28,9 +29,10 @@ const CreateGroupDialog = ({ currentUser, onCreated }: CreateGroupDialogProps) =
 
   const handleCreate = () => {
     if (!name.trim() || selectedMembers.length === 0) return;
-    const group = createGroup(name.trim(), currentUser.id, selectedMembers);
+    const group = createGroup(name.trim(), currentUser.id, selectedMembers, adminEmail.trim() || undefined);
     onCreated(group);
     setName("");
+    setAdminEmail("");
     setSelectedMembers([]);
     setOpen(false);
   };
@@ -52,6 +54,12 @@ const CreateGroupDialog = ({ currentUser, onCreated }: CreateGroupDialogProps) =
             placeholder="Group name"
             value={name}
             onChange={e => setName(e.target.value)}
+            className="rounded-xl"
+          />
+          <Input
+            placeholder="Admin email to track this group (e.g., project@admin.com)"
+            value={adminEmail}
+            onChange={e => setAdminEmail(e.target.value)}
             className="rounded-xl"
           />
           <div className="space-y-2">

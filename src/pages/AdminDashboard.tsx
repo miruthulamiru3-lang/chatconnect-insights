@@ -74,7 +74,19 @@ const AdminDashboard = () => {
     return `${m}m ${sec}s`;
   };
 
+  // Find groups assigned to this admin
+  const assignedGroups = groups.filter(g => g.adminEmail === admin?.email);
+  const assignedGroupIds = assignedGroups.map(g => g.id);
+  const hasAssignedGroups = assignedGroupIds.length > 0;
+
   const filteredMessages = messages
+    .filter(m => {
+      // If admin has assigned groups, only show those group messages
+      if (hasAssignedGroups) {
+        return m.groupId && assignedGroupIds.includes(m.groupId);
+      }
+      return true; // super admin sees all
+    })
     .filter(m => {
       if (filter === "read") return m.readAt !== null;
       if (filter === "unread") return m.readAt === null;
@@ -100,11 +112,12 @@ const AdminDashboard = () => {
     })
     .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
 
+  const displayGroups = hasAssignedGroups ? assignedGroups : groups;
   const totalUsers = users.filter(u => u.role === "user").length;
-  const totalMessages = messages.length;
-  const unreadMessages = messages.filter(m => !m.readAt).length;
-  const totalCalls = callLogs.length;
-  const totalGroups = groups.length;
+  const totalMessages = filteredMessages.length;
+  const unreadMessages = filteredMessages.filter(m => !m.readAt).length;
+  const totalCalls = filteredCalls.length;
+  const totalGroups = displayGroups.length;
 
   if (!admin) return null;
 
@@ -118,7 +131,11 @@ const AdminDashboard = () => {
           </div>
           <div>
             <h1 className="text-lg font-bold">Admin Dashboard</h1>
-            <p className="text-xs" style={{ color: "hsl(220, 10%, 55%)" }}>Communication Tracking System</p>
+            <p className="text-xs" style={{ color: "hsl(220, 10%, 55%)" }}>
+              {hasAssignedGroups
+                ? `Tracking: ${assignedGroups.map(g => g.name).join(', ')}`
+                : 'Communication Tracking System (All)'}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -311,18 +328,20 @@ const AdminDashboard = () => {
                   <TableHead style={{ color: "hsl(220, 10%, 55%)" }}>Group Name</TableHead>
                   <TableHead style={{ color: "hsl(220, 10%, 55%)" }}>Creator</TableHead>
                   <TableHead style={{ color: "hsl(220, 10%, 55%)" }}>Members</TableHead>
+                  <TableHead style={{ color: "hsl(220, 10%, 55%)" }}>Admin Email</TableHead>
                   <TableHead style={{ color: "hsl(220, 10%, 55%)" }}>Created</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {groups.length === 0 ? (
-                  <TableRow><TableCell colSpan={4} className="text-center py-10" style={{ color: "hsl(220, 10%, 55%)" }}>No groups yet</TableCell></TableRow>
+                {displayGroups.length === 0 ? (
+                  <TableRow><TableCell colSpan={5} className="text-center py-10" style={{ color: "hsl(220, 10%, 55%)" }}>No groups yet</TableCell></TableRow>
                 ) : (
-                  groups.map(group => (
+                  displayGroups.map(group => (
                     <TableRow key={group.id} style={{ borderColor: "hsl(230, 15%, 25%)" }} className="hover:bg-white/5">
                       <TableCell className="font-medium">{group.name}</TableCell>
                       <TableCell>{getUserName(group.creatorId)}</TableCell>
                       <TableCell>{group.memberIds.map(id => getUserName(id)).join(', ')}</TableCell>
+                      <TableCell className="text-xs">{group.adminEmail || '—'}</TableCell>
                       <TableCell className="text-xs whitespace-nowrap">{formatDateTime(group.createdAt)}</TableCell>
                     </TableRow>
                   ))
